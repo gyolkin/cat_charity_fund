@@ -14,6 +14,10 @@ UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 
 
 class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
+    """
+    Базовый класс Create-Read-Update-Delete действий.
+    """
+
     def __init__(self, model: Type[ModelType]):
         self.model = model
 
@@ -24,6 +28,17 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     ) -> Optional[ModelType]:
         db_obj = await session.execute(
             select(self.model).where(self.model.id == obj_id)
+        )
+        return db_obj.scalars().first()
+
+    async def get_first_opened(
+        self,
+        session: AsyncSession,
+    ) -> Optional[ModelType]:
+        db_obj = await session.execute(
+            select(self.model)
+            .where(self.model.fully_invested == 0)
+            .order_by(self.model.create_date)
         )
         return db_obj.scalars().first()
 

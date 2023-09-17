@@ -17,3 +17,8 @@ class CharityDonationParent(Base):
     fully_invested: Boolean = Column(Boolean, default=False)
     create_date: DateTime = Column(DateTime, default=datetime.now)
     close_date: DateTime = Column(DateTime)
+
+    def make_fully_invested(self):
+        """Закрывает проект или пожертвование."""
+        self.fully_invested = True
+        self.close_date = datetime.now()

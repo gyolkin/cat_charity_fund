@@ -15,6 +15,7 @@ from app.schemas.charity_project import (
     CharityProjectDB,
     CharityProjectUpdate,
 )
+from app.services import investing_worker
 
 router = APIRouter()
 
@@ -48,6 +49,7 @@ async def create_charity_project(
     """
     await check_project_name_not_exists(project_input.name, session)
     new_project = await charity_project_crud.create(project_input, session)
+    new_project = await investing_worker(new_project, session)
     return new_project
 
 
