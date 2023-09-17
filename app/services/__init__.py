@@ -1,1 +1,1 @@
-from .investing import investing_worker
+from .investing import investing_worker  # noqa
