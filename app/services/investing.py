@@ -1,54 +1,42 @@
-from typing import TypeVar
+from typing import List, TypeVar
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.controllers.crud import charity_project_crud, donation_crud
 from app.models import CharityProject, Donation
 
-ModelType = TypeVar("ModelType", CharityProject, Donation)
+TargetType = TypeVar("TargetType", CharityProject, Donation)
+SourceType = TypeVar("SourceType", CharityProject, Donation)
 
 
-async def investing_worker(obj: ModelType, session: AsyncSession) -> ModelType:
+def investing_worker(
+    target: TargetType, sources: List[SourceType]
+) -> List[SourceType]:
     """
     Функция, выполняющая инвестирование неиспользованных средств в проекты.
 
     Описание: Пожертвование распределяется между проектами по принципу FIFO.
         Если проекты закрыты, то пожертвование используется в новом проекте.
 
-    Input:
-        obj (Donation | CharityProject): Объект нового пожертвования
+    Ввод:
+        target (Donation | CharityProject): Объект нового пожертвования
             или проекта.
-        session (AsyncSession): Асинхронная сессия.
-    Output:
-        obj (Donation | CharityProject): Объект преобразованного пожертвования
-            или проекта.
+        sources List[(Donation | CharityProject)]: Список открытых
+            пожертвований или проектов.
 
-    Функция рекурсивно работает до тех пор, пока не останутся только
-        закрытые проекты или пожертвования.
+    Вывод:
+        List[(Donation | CharityProject)]: Список преобразованных пожертвований
+            или проектов.
     """
-    open_project = await charity_project_crud.get_first_opened(session)
-    open_donation = await donation_crud.get_first_opened(session)
+    updated_sources = []
+    for source in sources:
+        source_to_close = source.full_amount - source.invested_amount
+        target_to_close = target.full_amount - target.invested_amount
+        distributable_amount = min(source_to_close, target_to_close)
+        source.invested_amount += distributable_amount
+        target.invested_amount += distributable_amount
+        if source.invested_amount == source.full_amount:
+            source.make_fully_invested()
+        updated_sources.append(source)
 
-    if not open_project or not open_donation:
-        return obj
+    if target.invested_amount == target.full_amount:
+        target.make_fully_invested()
 
-    project_to_close = open_project.full_amount - open_project.invested_amount
-    donation_to_close = (
-        open_donation.full_amount - open_donation.invested_amount
-    )
-    distributable_amount = min(project_to_close, donation_to_close)
-    open_project.invested_amount += distributable_amount
-    open_donation.invested_amount += distributable_amount
-
-    if open_project.invested_amount == open_project.full_amount:
-        open_project.make_fully_invested()
-    if open_donation.invested_amount == open_donation.full_amount:
-        open_donation.make_fully_invested()
-
-    session.add(open_project)
-    session.add(open_donation)
-    await session.commit()
-    await session.refresh(open_project)
-    await session.refresh(open_donation)
-    await investing_worker(obj, session)
-    return obj
+    return updated_sources

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Annotated, Optional
 
 from pydantic import BaseModel, Extra, Field, PositiveInt, validator
 
@@ -14,8 +14,8 @@ class CharityProjectBase(BaseModel):
 
 
 class CharityProjectCreate(CharityProjectBase):
-    name: str = Field(..., min_length=1, max_length=100)
-    description: str = Field(..., min_length=1)
+    name: Annotated[str, Field(min_length=1, max_length=100)]
+    description: Annotated[str, Field(min_length=1)]
     full_amount: PositiveInt
 
 

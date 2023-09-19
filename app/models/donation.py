@@ -19,5 +19,5 @@ class Donation(CharityDonationParent):
         close_date (datetime): Дата, когда сумма была распределена по проектам.
     """
 
-    user_id: ForeignKey = Column(Integer, ForeignKey("user.id"))
-    comment: Text = Column(Text)
+    user_id = Column(Integer, ForeignKey("user.id"))
+    comment = Column(Text)

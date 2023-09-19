@@ -1,7 +1,9 @@
+from typing import List
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.controllers.crud import donation_crud
+from app.controllers.crud import charity_project_crud, donation_crud
 from app.core.db import get_async_session
 from app.core.user import current_superuser, current_user
 from app.models import User
@@ -13,7 +15,7 @@ router = APIRouter()
 
 @router.get(
     "/",
-    response_model=list[AllDonationDB],
+    response_model=List[AllDonationDB],
     response_model_exclude_none=True,
     dependencies=[Depends(current_superuser)],
 )
@@ -30,7 +32,7 @@ async def get_all_donations(
 
 @router.get(
     "/my",
-    response_model=list[UserDonationDB],
+    response_model=List[UserDonationDB],
     response_model_exclude_none=True,
 )
 async def get_user_donations(
@@ -54,5 +56,11 @@ async def create_donation(
 ):
     """Сделать пожертвование."""
     new_donation = await donation_crud.create(donation_input, session, user)
-    new_donation = await investing_worker(new_donation, session)
+    session.add_all(
+        investing_worker(
+            new_donation, await charity_project_crud.get_multi_opened(session)
+        )
+    )
+    await session.commit()
+    await session.refresh(new_donation)
     return new_donation

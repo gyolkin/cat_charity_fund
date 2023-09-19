@@ -11,13 +11,13 @@ async def check_project_name_not_exists(
     """
     Проверяет, что проект с таким названием не существует в базе данных.
 
-    Input:
+    Ввод:
         project_name (str): Имя запрашиваемого проекта.
         session (AsyncSession): Текущая сессия.
-    Error:
+    Ошибка:
         400
     """
-    project_id = await charity_project_crud.get_project_id_by_name(
+    project_id = await charity_project_crud.get_id_by_name(
         project_name, session
     )
     if project_id is not None:
@@ -31,9 +31,9 @@ async def check_project_not_funded(invested_amount: int) -> None:
     """
     Проверяет, что в данный проект не вложены средства.
 
-    Input:
+    Ввод:
         invested_amount (int): Вложенная сумма.
-    Error:
+    Ошибка:
         400
     """
     if invested_amount > 0:
@@ -47,10 +47,10 @@ async def check_project_amount(invested_amount: int, full_amount: int) -> None:
     """
     Проверяет, что целевая сумма больше или равна уже вложенной.
 
-    Input:
+    Ввод:
         invested_amount (int): Вложенная сумма.
         full_amount (int): Целевая сумма.
-    Error:
+    Ошибка:
         400
     """
     if invested_amount > full_amount:
@@ -64,10 +64,10 @@ async def check_project_status(fully_invested: bool) -> None:
     """
     Проверяет, что проект на данный момент не закрыт.
 
-    Input:
+    Ввод:
         fully_invested (bool): Значение True/False,
         указывающее на статус проекта.
-    Error:
+    Ошибка:
         400
     """
     if fully_invested:

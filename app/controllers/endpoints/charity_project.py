@@ -1,7 +1,9 @@
+from typing import List
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.controllers.crud import charity_project_crud
+from app.controllers.crud import charity_project_crud, donation_crud
 from app.controllers.validators.charity_project import (
     check_project_amount,
     check_project_name_not_exists,
@@ -22,7 +24,7 @@ router = APIRouter()
 
 @router.get(
     "/",
-    response_model=list[CharityProjectDB],
+    response_model=List[CharityProjectDB],
     response_model_exclude_none=True,
 )
 async def get_all_charity_projects(
@@ -49,7 +51,13 @@ async def create_charity_project(
     """
     await check_project_name_not_exists(project_input.name, session)
     new_project = await charity_project_crud.create(project_input, session)
-    new_project = await investing_worker(new_project, session)
+    session.add_all(
+        investing_worker(
+            new_project, await donation_crud.get_multi_opened(session)
+        )
+    )
+    await session.commit()
+    await session.refresh(new_project)
     return new_project
 
 

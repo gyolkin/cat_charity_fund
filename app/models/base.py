@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Integer
+from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, Integer
 
 from app.core.db import Base
 
@@ -12,11 +12,15 @@ class CharityDonationParent(Base):
 
     __abstract__ = True
 
-    full_amount: Integer = Column(Integer, default=0)
-    invested_amount: Integer = Column(Integer, default=0)
-    fully_invested: Boolean = Column(Boolean, default=False)
-    create_date: DateTime = Column(DateTime, default=datetime.now)
-    close_date: DateTime = Column(DateTime)
+    full_amount = Column(
+        Integer, CheckConstraint("full_amount >= 0"), default=0
+    )
+    invested_amount = Column(
+        Integer, CheckConstraint("full_amount >= invested_amount"), default=0
+    )
+    fully_invested = Column(Boolean, default=False)
+    create_date = Column(DateTime, default=datetime.now)
+    close_date = Column(DateTime)
 
     def make_fully_invested(self):
         """Закрывает проект или пожертвование."""

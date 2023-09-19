@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, Text
 
+from app.core.constants import NAME_MAX_LENGTH
 from app.models.base import CharityDonationParent
 
 
@@ -18,5 +19,5 @@ class CharityProject(CharityDonationParent):
         close_date (datetime): Дата закрытия проекта.
     """
 
-    name: String = Column(String(100), unique=True, nullable=False)
-    description: Text = Column(Text, nullable=False)
+    name = Column(String(NAME_MAX_LENGTH), unique=True, nullable=False)
+    description = Column(Text, nullable=False)

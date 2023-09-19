@@ -31,17 +31,6 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         )
         return db_obj.scalars().first()
 
-    async def get_first_opened(
-        self,
-        session: AsyncSession,
-    ) -> Optional[ModelType]:
-        db_obj = await session.execute(
-            select(self.model)
-            .where(self.model.fully_invested == 0)
-            .order_by(self.model.create_date)
-        )
-        return db_obj.scalars().first()
-
     async def get_or_404(
         self,
         obj_id: int,
@@ -59,8 +48,36 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             )
         return db_obj
 
+    async def get_id_by_name(
+        self,
+        name: str,
+        session: AsyncSession,
+    ) -> Optional[int]:
+        obj_id = await session.execute(
+            select(self.model.id).where(self.model.name == name)
+        )
+        return obj_id.scalars().first()
+
     async def get_multi(self, session: AsyncSession) -> List[ModelType]:
         db_objs = await session.execute(select(self.model))
+        return db_objs.scalars().all()
+
+    async def get_multi_opened(self, session: AsyncSession) -> List[ModelType]:
+        db_objs = await session.execute(
+            select(self.model)
+            .where(self.model.fully_invested == 0)
+            .order_by(self.model.create_date)
+        )
+        return db_objs.scalars().all()
+
+    async def get_multi_by_user_id(
+        self,
+        user_id: int,
+        session: AsyncSession,
+    ) -> List[ModelType]:
+        db_objs = await session.execute(
+            select(self.model).where(self.model.user_id == user_id)
+        )
         return db_objs.scalars().all()
 
     async def create(
